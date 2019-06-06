@@ -3,11 +3,12 @@ title: "Red Wine Dataset Analysis"
 author: "Patrick Flynn"
 date: "6/3/2019"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
+#Read in proper libraries 
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(dplyr)
@@ -57,6 +58,7 @@ The dataset used in this analysis is the red wine dataset described in Cortez et
 
 Wine Dataset Summary Statistics:
 ```{r, echo=FALSE}
+#Read in dataframe from file
 wine <- read.csv(file="wineQualityReds.csv",header=TRUE, sep=",")
 summary(wine)
 
@@ -69,6 +71,7 @@ Various single measures of the wine will be expalained in this portion of the an
 How well were the wines rated?
 
 ```{r, echo=FALSE} 
+#Save histogram for use at end of program
 winequal <- ggplot(data=wine, aes(x=quality, label=..count..)) + geom_histogram(color='black', fill='#891e1e', binwidth=1, na.rm=TRUE) + labs(title="Counts by Quality of Wine") +scale_x_continuous(name="Quality of Wine", limits=c(2, 9), breaks = seq(3,8, 1))
 winequal
 ```
@@ -100,6 +103,7 @@ summary(wine$alcohol)
 
 ## Acidity Analysis
 ```{r echo=FALSE}
+#Create acidity related histogram plots
 fixedacid <- ggplot(data=wine, aes(x=fixed.acidity)) + geom_histogram(color='black', fill='#891e1e', binwidth = 1) + labs(x="Fixed Acid")
 
 volatileacid <- ggplot(data=wine, aes(x=volatile.acidity)) + geom_histogram(color='black', fill='#891e1e', binwidth = 0.1) + labs(x="Volatile Acid")
@@ -116,6 +120,7 @@ Analysis of the acidity involved three separate measurements - fixed, volitle, a
 
 ## Salt/Sugar Analysis
 ```{r echo=FALSE}
+#Create salt and sugar histograms
 saltg <- ggplot(data=wine, aes(x=chlorides)) + geom_histogram(color='black', fill='#891e1e', binwidth = .05, na.rm=TRUE) + labs(x="Chlorides (salt)")
 
 sugarg <- ggplot(data=wine, aes(x=residual.sugar)) + geom_histogram(color='black', fill='#891e1e', binwidth = 1, na.rm=TRUE) + labs(x="Residual Sugar") + scale_x_continuous(limits=c(0, 15), breaks = seq(0,15, 1))
@@ -129,6 +134,7 @@ From a conventional standpoint, visualizations of chloride and residual sugar co
 ## Sulfur Dioxide Analysis
 
 ```{r echo=FALSE}
+#Create three separate histograms for each sulfure related measurement
 sulphatesg <- ggplot(data=wine, aes(x=sulphates)) + geom_histogram(color='black', fill='#891e1e', binwidth = .15, na.rm=TRUE) + labs(x="Sulphates Added")
 
 totalsulfurg <- ggplot(data=wine, aes(x=total.sulfur.dioxide)) + geom_histogram(color='black', fill='#891e1e', binwidth = 20, na.rm=TRUE) + labs(x="Total Sulfur Dioxide")
@@ -166,7 +172,10 @@ Yes - the bin distributions were modified for almost every graph. Due to the ver
 Now with measurements of interest in mind, variable values will be compared/measured against other variables. Of first importance is determining which variables are correlated:
 
 ```{r, echo=FALSE}
+#Melt correlation dataframe into a melted dataframe for easy plotting
 melted_matrix <- melt(round(cor(select(wine, -c("X"))),2))
+
+#Tile/heatmap dataframe into
 corrmatrixg <- ggplot(data=melted_matrix, aes(x=Var1, y=Var2, fill=value)) + geom_tile() + scale_fill_gradient(low="white", high="#891e1e") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x="Measurement", y="Measurement", title="Correlation Matrix")
 corrmatrixg
 ```
