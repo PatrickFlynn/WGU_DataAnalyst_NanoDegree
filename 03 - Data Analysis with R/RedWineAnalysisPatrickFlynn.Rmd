@@ -12,6 +12,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(dplyr)
 library(reshape2)
+library(gridExtra)
+library(grid)
+library(lattice)
 ```
 
 ## Introduction
@@ -21,7 +24,7 @@ The dataset used in this analysis is the red wine dataset described in Cortez et
    **Input variables (based on physicochemical tests):**
    
    1. fixed acidity (tartaric acid - g / dm^3)
-        * most acids involved with wine or fixed or nonvolatile (do not evaporate readily)
+        * most acids involved with wine are fixed or nonvolatile (do not evaporate readily)
    2. volatile acidity (acetic acid - g / dm^3)
         * the amount of acetic acid in wine, which at too high of levels can lead to an unpleasant, vinegar taste
    3. citric acid (g / dm^3)
@@ -39,7 +42,7 @@ The dataset used in this analysis is the red wine dataset described in Cortez et
    9. pH
         * describes how acidic or basic a wine is on a scale from 0 (very acidic) to 14 (very basic); most wines are between 3-4 on the pH scale
    10. sulphates (potassium sulphate - g / dm3)
-        * a wine additive which can contribute to sulfur dioxide gas (S02) levels, wich acts as an antimicrobial and antioxidant
+        * a wine additive which can contribute to sulfur dioxide gas (S02) levels, which acts as an antimicrobial and antioxidant
    11. alcohol (% by volume)
         * the percent alcohol content of the wine
    
@@ -56,9 +59,7 @@ Wine Dataset Summary Statistics:
 ```{r, echo=FALSE}
 wine <- read.csv(file="wineQualityReds.csv",header=TRUE, sep=",")
 summary(wine)
-test <- ggplot(data=wine, aes(x=residual.sugar)) + geom_histogram(color='black', fill='#891e1e') + labs(x="Residual Sugar", title="test!")
-test
-ggplot(data=wine, aes(x= fixed.acidity, y = volatile.acidity)) + geom_point() + geom_point(color='red', stat='summary', fun.x = mean)
+
 ```
 
 # Univariate Plots Section
@@ -68,7 +69,7 @@ Various single measures of the wine will be expalained in this portion of the an
 How well were the wines rated?
 
 ```{r, echo=FALSE} 
-winequal <- ggplot(data=wine, aes(x=quality, label=..count..)) + geom_histogram(color='black', fill='#891e1e', binwidth=1, na.rm=TRUE) + labs(title="Counts by Quality of Wine") +scale_x_continuous(name="Quality of Wine", limits=c(2, 9), breaks = seq(3,8, 1)) + theme_classic()
+winequal <- ggplot(data=wine, aes(x=quality, label=..count..)) + geom_histogram(color='black', fill='#891e1e', binwidth=1, na.rm=TRUE) + labs(title="Counts by Quality of Wine") +scale_x_continuous(name="Quality of Wine", limits=c(2, 9), breaks = seq(3,8, 1))
 winequal
 ```
 
@@ -83,8 +84,8 @@ summary(wine$quality)
 How high/low is the alcohol content?
 
 ```{r, echo=FALSE} 
-winequal = ggplot(data=wine, aes(x=alcohol)) + geom_histogram(color='black', fill='#891e1e', binwidth=0.25, na.rm=TRUE) + labs(title="Alcohol Content Measurements") +scale_x_continuous(name="Alcohol Content (%)", limits=c(8, 15.5), breaks = seq(0,18, 0.5)) 
-winequal
+alcont = ggplot(data=wine, aes(x=alcohol)) + geom_histogram(color='black', fill='#891e1e', binwidth=0.25, na.rm=TRUE) + labs(title="Alcohol Content Measurements") +scale_x_continuous(name="Alcohol Content (%)", limits=c(8, 15.5), breaks = seq(0,18, 0.5)) 
+alcont
 ```
 
 The majority of the wine samples in our data fall between 8% and 11% alcohol content by volume. A large number of the wine samples are concentrated around 9.5% alcohol by volume. Only a small amount of the wine samples are above 12%. According to Alchol.Org, most red wines are typically between 12-15% [Source](https://www.alcohol.org/statistics-information/abv/). Perhaps this is why our quality was lower? We will explore this relationship further in our analysis. 
@@ -95,200 +96,164 @@ summary(wine$alcohol)
 ## R Markdown
 ```
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
-summary(cars)
-print("hello!")
+## Acidity Analysis
+```{r echo=FALSE}
+fixedacid <- ggplot(data=wine, aes(x=fixed.acidity)) + geom_histogram(color='black', fill='#891e1e', binwidth = 1) + labs(x="Fixed Acid")
+
+volatileacid <- ggplot(data=wine, aes(x=volatile.acidity)) + geom_histogram(color='black', fill='#891e1e', binwidth = 0.1) + labs(x="Volatile Acid")
+
+citricacid <- ggplot(data=wine, aes(x=citric.acid)) + geom_histogram(color='black', fill='#891e1e', binwidth = 0.1) + labs(x="Citric Acid")
+
+phlevel <- ggplot(data=wine, aes(x=pH)) + geom_histogram(color='black', fill='#891e1e', binwidth = 0.1) + labs(x="pH Level")
+
+
+grid.arrange(fixedacid, volatileacid, citricacid, phlevel,  ncol = 2,top="Acidity Related Measurements")
 ```
 
-## Including Plots
+Analysis of the acidity involved three separate measurements - fixed, volitle, and citric acidity. Fixed acidity is a component of all wines and has a normal distribution. Volatile acid is an unwanted component of wine and higher amounts can lead to unpleasant tastes, similarly to fixed acidity, volatile acid is normally distributed. Citric acid has a right-skewed distribution with most wines having smaller amounts. pH level has a near perfect distribution -  we would expect to see a possible negative correlation between pH and various measurements of acidity. Further analysis will be done to see if acidity has an impact on quality. 
 
-You can also embed plots, for example:
+## Salt/Sugar Analysis
+```{r echo=FALSE}
+saltg <- ggplot(data=wine, aes(x=chlorides)) + geom_histogram(color='black', fill='#891e1e', binwidth = .05, na.rm=TRUE) + labs(x="Chlorides (salt)")
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+sugarg <- ggplot(data=wine, aes(x=residual.sugar)) + geom_histogram(color='black', fill='#891e1e', binwidth = 1, na.rm=TRUE) + labs(x="Residual Sugar") + scale_x_continuous(limits=c(0, 15), breaks = seq(0,15, 1))
+
+
+grid.arrange(saltg, sugarg, ncol = 2,top="Salt/Sugar Measurements")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+From a conventional standpoint, visualizations of chloride and residual sugar content make sense. Too much salt or sugar would result in an overly salty or sweet wine. Will the wines that have very high residual sugar content also have a high quality rating?
 
-TITLE by YOUR_NAME_HERE
-========================================================
+## Sulfur Dioxide Analysis
 
-> **Tip**: You will see quoted sections like this throughout the template to
-help you construct your report. Make sure that you remove these notes before
-you finish and submit your project!
+```{r echo=FALSE}
+sulphatesg <- ggplot(data=wine, aes(x=sulphates)) + geom_histogram(color='black', fill='#891e1e', binwidth = .15, na.rm=TRUE) + labs(x="Sulphates Added")
 
-> **Tip**: One of the requirements of this project is that your code follows
-good formatting techniques, including limiting your lines to 80 characters or
-less. If you're using RStudio, go into Preferences \> Code \> Display to set up
-a margin line to help you keep track of this guideline!
+totalsulfurg <- ggplot(data=wine, aes(x=total.sulfur.dioxide)) + geom_histogram(color='black', fill='#891e1e', binwidth = 20, na.rm=TRUE) + labs(x="Total Sulfur Dioxide")
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
-# Load all of the packages that you end up using in your analysis in this code
-# chunk.
+freesulfurg <- ggplot(data=wine, aes(x=free.sulfur.dioxide)) + geom_histogram(color='black', fill='#891e1e', binwidth = 5, na.rm=TRUE) + labs(x="Free Sulfur Dioxide")
 
-# Notice that the parameter "echo" was set to FALSE for this code chunk. This
-# prevents the code from displaying in the knitted HTML output. You should set
-# echo=FALSE for all code chunks in your file, unless it makes sense for your
-# report to show the code that generated a particular plot.
 
-# The other parameters for "message" and "warning" should also be set to FALSE
-# for other code chunks once you have verified that each plot comes out as you
-# want it to. This will clean up the flow of your report.
-
-library(ggplot2)
+grid.arrange(sulphatesg, totalsulfurg, freesulfurg, ncol = 3,top="Sulfur Dioxide Related Measurements")
 ```
 
-```{r echo=FALSE, Load_the_Data}
-# Load the Data
-
-```
-
-> **Tip**: Before you create any plots, it is a good idea to provide a short
-introduction into the dataset that you are planning to explore. Replace this
-quoted text with that general information!
-
-# Univariate Plots Section
-
-> **Tip**: In this section, you should perform some preliminary exploration of
-your dataset. Run some summaries of the data and create univariate plots to
-understand the structure of the individual variables in your dataset. Don't
-forget to add a comment after each plot or closely-related group of plots!
-There should be multiple code chunks and text sections; the first one below is
-just to help you get started.
-
-```{r echo=FALSE, Univariate_Plots}
-
-```
-
-> **Tip**: Make sure that you leave a blank line between the start / end of
-each code block and the end / start of your Markdown text so that it is
-formatted nicely in the knitted text. Note as well that text on consecutive
-lines is treated as a single space. Make sure you have a blank line between
-your paragraphs so that they too are formatted for easy readability.
+Sulfur related measurements involve the amount of sulfur dioxide present in the wine. While different scales, the sulphates added, total sulfur dioxide, and free sulfur dioxide appear to follow similar distributions indicating perhaps they are correlated in some way. The author indicates sulfur levels over 50ppm can lead to a noticeable increase. Will the wines with higher sulfur content have lower quality? 
 
 # Univariate Analysis
 
-> **Tip**: Now that you've completed your univariate explorations, it's time to
-reflect on and summarize what you've found. Use the questions below to help you
-gather your observations and add your own if you have other thoughts!
-
 ### What is the structure of your dataset?
+The dataset consists of 1599 wine samples with 13 variables (1 of which - "X" is an identifier for the wine and not analyzed in this research). The quality measurement is based on a 1-10 rating scale given to the wine by a wine expert. Every column in the dataset is numerical, there are no factors/categorical variables present in the dataset. 
 
 ### What is/are the main feature(s) of interest in your dataset?
+The main feature of interest in this dataset is quality. The rating given by the wine expert. This analysis could provide with wine makers, etc. the ability to rate a wine without a subjective tasting and instead rely on data. A predictive model could even be built given a set of features (such as sugar, etc.) and sucessfully predict the quality.
 
 ### What other features in the dataset do you think will help support your \
-investigation into your feature(s) of interest?
+While present across different measurements, three collections of measurements interest me greatly: sulfur dioxide content, sugar/salt content, and acidity levels of the wine. The remainder of this analysis will focus on determining which of these measurements have an impact on quality.Additionally, does alcohol content improve/diminish quality in the wine?
 
 ### Did you create any new variables from existing variables in the dataset?
+Because the variables (measurements) are all numeric data types, no new variables were created. Instead analysis (means, regression lines, etc.) will be created in an adhoc manner.
 
 ### Of the features you investigated, were there any unusual distributions? \
-Did you perform any operations on the data to tidy, adjust, or change the form \
-of the data? If so, why did you do this?
+Yes, while the quality of the wine followed a normal distribution - I found it very unusual that there were so many of the wines rated at a 5/6 and no wines that scored in the 9/10 or 1/2 range. In addition to the quality measurements, there were a few samples taken of the wine that had (compartively) much higher measurements in terms of chlorides and residual sugar levels.
+
+### Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+Yes - the bin distributions were modified for almost every graph. Due to the very shallow or very wide distribution for some of the measurements, the bins needed to account as such. I considered log transforming the X axis in the residual sugar visualization, but the resulting log10 or log2 transformations were not much different than the final product.
 
 
 # Bivariate Plots Section
+Now with measurements of interest in mind, variable values will be compared/measured against other variables. Of first importance is determining which variables are correlated:
+
 ```{r, echo=FALSE}
 melted_matrix <- melt(round(cor(select(wine, -c("X"))),2))
-ggplot(data=melted_matrix, aes(x=Var1, y=Var2, fill=value)) + geom_tile() + scale_fill_gradient(low="white", high="#891e1e") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+corrmatrixg <- ggplot(data=melted_matrix, aes(x=Var1, y=Var2, fill=value)) + geom_tile() + scale_fill_gradient(low="white", high="#891e1e") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x="Measurement", y="Measurement", title="Correlation Matrix")
+corrmatrixg
 ```
 
+The above correlation matrix shows some incredibly interesting relationships in the data. The pH/fixed acidity/volatile acidity/citric acidity all appear to be negatively correlated. This makes sense based on how pH works. As pH increases, wine becomes more basic and less acidic. Based on this correlation matrix, as acidity of any kind increases, pH decreases. There appears to be a positive correlation between quality and alcohol content, indicating that as alcohol content increases, the quality rises. Alcohol content also appears to be positively affected by sulphates added and fixed/citric acidity. However, the opposite is true of volatile acidity, which increases has a negative impact on quality.
 
-> **Tip**: Based on what you saw in the univariate plots, what relationships
-between variables might be interesting to look at in this section? Don't limit
-yourself to relationships between a main output feature and one of the
-supporting variables. Try to look at relationships between supporting variables
-as well.
 
-```{r echo=FALSE, Bivariate_Plots}
-
+```{r, echo=FALSE}
+boxplotg <- ggplot(data=wine, aes(x= as.factor(quality), y = alcohol)) + geom_boxplot(fill='#c17272', color="black") + labs(x="Quality of Wine", y="Alcohol Content (%)", title="Boxplot Comparison of Quality vs Alcohol Content")
+#+ geom_point(color='red', stat='summary', fun.x = mean)
 ```
+
+The above boxplot demonstrates a very clear positive correlation between alcohol content and the quality of the wine. However, due to the presence of so many outliers in the "5" quality rating, additional features will be considered for their impact on quality in further multivariate analysis.
+
+```{r echo=FALSE}
+ggplot(data=wine, aes(x=residual.sugar, y=chlorides)) + geom_line(size=1, color="#891e1e") + labs(x="Residual Sugar (Regression Line in Pink)", y="Chlorides (salt)", title="Residual Sugar vs Chlorides (salt)") + geom_smooth(method = "lm", se = FALSE, color="pink")
+```
+
+The above chart appears to show that as residual sugar levels increase in a wine, a decrease is seen in chloride levels. However, fitting a regression line to the data displays that while there are a few samples that have this relationship, the overall relationship is just barely positively correlated.
+
 
 # Bivariate Analysis
 
-> **Tip**: As before, summarize what you found in your bivariate explorations
-here. Use the questions below to guide your discussion.
-
 ### Talk about some of the relationships you observed in this part of the \
-investigation. How did the feature(s) of interest vary with other features in \
-the dataset?
+The most interesting and revealing relationship observed here is between quality and alcohol content. Almost like steps on a staircase, as alcohol content increases, so too does the quality of the wine. The one item of interest however is the significant amount of outliers in the "5" quality rating category. Several samples that receieved a rating of "5" had alcohol content above 11%. This will be an important metric to try and unravel.
 
-### Did you observe any interesting relationships between the other features \
-(not the main feature(s) of interest)?
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+Interestingly, an initial inspection of sugar vs salt would indicate that an intuitive relationship exists between the two measures (i.e. as sugar increases, salt decreases). However, fitting a model revealed just a slight trend upward. A multivariate plot will be analyzed to discover if quality increases more so with residual sugar, clorides, or a increase/combination of both.
 
 ### What was the strongest relationship you found?
+The correlation matrix displayed a VERY strong positive correlation between citric/fixed acidity, density/fixed acidity, and total sulfur dioxide/free sulfur dioxide. 
 
 
 # Multivariate Plots Section
 
-> **Tip**: Now it's time to put everything together. Based on what you found in
-the bivariate plots section, create a few multivariate plots to investigate
-more complex interactions between variables. Make sure that the plots that you
-create here are justified by the plots you explored in the previous section. If
-you plan on creating any mathematical models, this is the section where you
-will do that.
-
-```{r echo=FALSE, Multivariate_Plots}
-
+```{r echo=FALSE}
+ggplot(data=wine, aes(x= fixed.acidity, y = volatile.acidity, color=pH)) + geom_jitter() + scale_colour_gradient(high="pink", low="#891e1e")  + labs(x="Fixed Acidity", y="Volatile Acidity", title="Fixed vs Volatile Acidity - Colored by pH")
+#+ geom_point(aes(x=4, y=.6), data=wine, size=50, shape=1, color="gold4")
+#+ geom_point(color='red', stat='summary', fun.x = mean)
 ```
+
+This scatter plot shows a very interesting relationship between the acidity measurements in the wine data. The left quadrant of the visualization shows that lower pH values result in lower fixed acidity and lower volatile acidity. There aren't really any visible samples that have a high volatile or fixed acidity that have a lower pH. Again, knowing what we know about the pH scale, this makes sense and is what we expect to see!
+
+```{r echo=FALSE}
+ggplot(data=wine, aes(x= residual.sugar, y = chlorides, color=as.factor(quality))) + geom_jitter()+scale_colour_brewer(palette = "Reds")+ labs(x="Residual Sugar", y="Chlorides (salt)", title="Sugar vs Salt - Colored by Quality Rating")
+#+ geom_point(aes(x=2, y=.1), data=wine, size=50, shape=1, color="black", stroke=2)
+#+ geom_point(color='red', stat='summary', fun.x = mean)
+```
+
+As a follow up to our previous bivariate line chart, this scatter plot shows us that there does not appear to be any real strong relationship between quality, sugar, and salt. While some of our higher quality wines have more sugar and less salt - we have a high concentration of low sugar/low salt higher quality wines. This effectively puts to rest any concerns that too low of a sugar/salt measurement will hurt our quality.
 
 # Multivariate Analysis
 
-### Talk about some of the relationships you observed in this part of the \
-investigation. Were there features that strengthened each other in terms of \
-looking at your feature(s) of interest?
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+All of the acidity measurements were very dependent on one another. This enforces what we see in our correlation matrix. As pH increases, our acidity goes higher. Becuase there is a moderate positive correlation with quality, it is same to assume that our more acidic wines will likely have higher quality. But experiments/statistical comparisons will be needed for this.
 
 ### Were there any interesting or surprising interactions between features?
+The relationship between quality/salt/sugar was VERY surprising! Upon initial investigation I would have assumed that higher sugar wines would by far have higher residual sugar measurements. This did not really prove to be true, instead there was not a strong relationship between sugar/chlorides and quality ratings.
 
-### OPTIONAL: Did you create any models with your dataset? Discuss the \
-strengths and limitations of your model.
 
 ------
 
-# Final Plots and Summary
-
-> **Tip**: You've done a lot of exploration and have built up an understanding
-of the structure of and relationships between the variables in your dataset.
-Here, you will select three plots from all of your previous exploration to
-present here as a summary of some of your most interesting findings. Make sure
-that you have refined your selected plots for good titling, axis labels (with
-units), and good aesthetic choices (e.g. color, transparency). After each plot,
-make sure you justify why you chose each plot by describing what it shows.
-
-### Plot One
-```{r echo=FALSE, Plot_One}
-
+# Top 3 Insightful Visualizations and Summary
+```{r echo=FALSE}
+winequal
 ```
 
-### Description One
+**Insights:** Because our dataset is very dense with quality rating 5 and 6 wines, using this dataset to help determine what makes an excellent (9/10) wine will be very difficult. Likewise to try and use this dataset to determine what makes a wine terrible (1/2) is also difficult due to our lack of observations of data matching that criteria. Overall our red wine dataset should be called the mediocre red wine dataset. 
 
-
-### Plot Two
-```{r echo=FALSE, Plot_Two}
-
+```{r echo=FALSE}
+corrmatrixg
 ```
 
-### Description Two
+**Insights:** Our correlation matrix was very useful in pointing out our acidity and sulfur dioxide related measurements correlations. What our dataset is missing are any "red flags" (no pun intended) that indicate a sure-fire high/low quality wine. Like mentioned in the insight above, this is likely due to our limited dataset and having no terrible/outstanding samples to analyze. While we see weak/moderate positive relationships, there are no measurements that we can difinitively state are indicitive of a gold medal winning wine.
 
-
-### Plot Three
-```{r echo=FALSE, Plot_Three}
-
+```{r echo=FALSE}
+boxplotg
 ```
 
-### Description Three
+**Insights:** Alcohol content's impact on quality was the most apparent impact on quality of wine. While the data collection methods were not clear on if all of this wine sampling occured in one night, there is a noticeable increase in the average alcohol content for each level in the quality scale. Of all of our measures, this variable would likely be our best single predictor variable in our dataset.
+
+## Summary:
+Wine quality has several chemical measurements that work together to make what we know and love. While this particular dataset did not have any "smoking guns", it is clear that overall factors such as acidity, sulfur dioxide content, and alcohol content mildy/moderatley impact the quality of wine. Moving forward, a more robust dataset containing samples deemed excellent/terrible would be important to a more thorough and complete analysis (especially if estimation/prediction was a goal). In the lower quality range of red wine, alcohol content is typically about 1-1.5% lower than the higher rated wine.
 
 ------
 
 # Reflection
 
-> **Tip**: Here's the final step! Reflect on the exploration you performed and
-the insights you found. What were some of the struggles that you went through?
-What went well? What was surprising? Make sure you include an insight into
-future work that could be done with the dataset.
-
-> **Tip**: Don't forget to remove this, and the other **Tip** sections before
-saving your final work and knitting the final report!
+This dataset was incredibly interesting. While I am not an avid wine drinker, it was fascinating to see the various chemical properties that impact wine. Like detailed at great length above, I wish the dataset had (ANY) samples that were deemed excellent or terrible (quality 1,2,9,10). Because this dataset was primarily numeric, that also created the challenge of not being able to do a lot of factoring/categorization, the only variable that could really be easily factored was the quality. Because the chemical measurements are not a familiar measurement unless you are a scientist or wine expert, it also makes the data hard to understand/communicate in laymans terms. Overall the analysis was a sucess and it was very surprising that alcohol content had such a clear relationship with quality!
