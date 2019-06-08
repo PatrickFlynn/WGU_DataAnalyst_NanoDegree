@@ -1,0 +1,114 @@
+---
+title: "Stroop Effect Analysis"
+author: "Patrick Flynn"
+date: "6/7/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+[Link to Interactive Study](https://faculty.washington.edu/chudler/java/ready.html)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(reshape2)
+library(gridExtra)
+library(grid)
+library(lattice)
+
+#Set Knitr Params to output visualizations in standard format
+knitr::opts_chunk$set(fig.width=9,fig.height=5,fig.path='Figs/',
+                      fig.align='center',tidy=TRUE,
+                      echo=FALSE,warning=FALSE,message=FALSE)
+```
+
+```{r, echo=FALSE}
+data <- read.csv("Data.csv")
+data$Differences <- data$Congruent - data$Incongruent
+```
+
+### 1. What is our independent variable? What is our dependent variable?
+- **Dependent Variable:** The dependent variable in this study is the total response time for a study participant to read the color of each word on a slide.
+
+- **Independent Variable:** The independent variable is the color of each word on a slide in the study. For example the word "Green" may be colored red, or the word "Blue" may be correctly colored blue.
+
+### 2. What is an appropriate set of hypotheses for this task? What kind of statistical test do you expect to perform? Justify your choices.
+
+The research question we aim to answer in this study is if changing the color of words will change the speed at which a person can read them.
+
+#### Hypothesis Definitions:
+H<sub>0</sub>: $\mu$<sub>c</sub> = $\mu$<sub>i</sub>
+
+H<sub>a</sub>: $\mu$<sub>c</sub> $\neq$ $\mu$<sub>i</sub>
+
+Where $\mu$<sub>c</sub> is the sample mean of the congruent measures and $\mu$<sub>i</sub> is the sample mean of the incongruent measures.
+
+#### Statistical Test:
+A dependent t-test for paired samples will be performed. The test will feature two tails. A dependent t-test was chosen because we are measuring the same subject twice. Once before the treatment (changing the color of the words) and once after the treatment. This creates a pair of measurements for each subject. Because we do not know which direction our potential change will go (positive or negative) we will use a two-tailed test.
+
+### 3. Report some descriptive statistics regarding this dataset. Include at least one measure of central tendency and at least one measure of variability.
+
+### Measures of Central Tendency
+```{r, echo=FALSE}
+summary(data)
+```
+
+The above summary of the sample data demonstrates a delta between the $\mu$ values of -7.97 (rounded). This indicates that perhaps in samples where the data is congruent (i.e. "red" word is colored red) the participants are faster at speaking them. Likewise, samples where the data is incongruent (i.e. "red" word is colored green), the participants speak them slower.
+
+### Measures of Variability
+
+Standard Deviation of Differences:
+```{r echo=FALSE}
+sd(data$Differences)
+```
+
+Subtracting each of our incongruent measures from our congruent measures yields a difference between each sample. The standard deviation of these differences is displayed above. 
+
+### 4. Provide one or two visualizations that show the distribution of the sample data. Write one or two sentences noting what you observe about the plot or plots.
+
+```{r echo=FALSE}
+melted_data <- subset(data, select = -c(Differences) )
+melted_data <- melt(melted_data)
+ggplot(data=melted_data, aes(y=value, x=variable)) + geom_boxplot()  + 
+   labs(x="Experiment", y="Seconds to Complete", title="Stroop Effect Experiment BoxPlot") 
+```
+
+The boxplot above visualizes the difference in mean and overall spread of the data. The highest duration in the congruent data barely exceeds the median of the incongruent data. The incongruent data also features two outliers have over 30 second measurements.
+
+```{r echo=FALSE}
+congs <- ggplot(data=data, aes(x=Congruent)) + geom_histogram(binwidth = 2) +
+  geom_vline(xintercept = mean(data$Congruent), linetype="dotted", 
+                color = "blue", size=1.5) +
+  xlim(0, 35) + 
+   labs(x="Number of Seconds", y="Frequency of Participants", title="Congruent with Mean Line") 
+
+incongs <- ggplot(data=data, aes(x=Incongruent)) + geom_histogram(binwidth = 2) +
+  geom_vline(xintercept = mean(data$Incongruent), linetype="dotted", 
+                color = "Red", size=1.5) +
+   labs(x="Number of Seconds", y="Frequency of Participants", title="Incongruent with Mean Line") + xlim(0, 35)
+
+grid.arrange(congs, incongs, ncol = 2,top="Congruent vs Incongruent Distributions")
+```
+
+The distribution (frequency) of experiment measures for both congruent and incongruent experiments can be seen above. The mean of the congruent dataset is far lower than that of the incongruent dataset. Both charts were plotted on an identical X-axis to be able to more easily visualize/compare the distributions.
+
+### 5. Now, perform the statistical test and report your results. What is your confidence level and your critical statistic value? Do you reject the null hypothesis or fail to reject it? Come to a conclusion in terms of the experiment task. Did the results match up with your expectations?
+```{r echo=FALSE}
+t.test(data$Congruent, data$Incongruent, 
+       paired = TRUE, 
+       alternative = "two.sided")
+```
+
+Our T-Test yields a p-value of .00000004103. This means that our treatment was VERY unlikely to have happened by chance, one could argue almost impossible. Because our T-Value is also very low (-8.021) as well, we can reject the null hypothesis that $\mu$<sub>c</sub> = $\mu$<sub>i</sub>. We can say with 95% confidence that repeated experiments would yield an average $\mu$ of between -10 to -5.9 seconds longer in the incongruent measurements. This affirms that by modifying the colors of the spoken words in the experiment - an increase in ability to comprehend/speak the words is seen. I personally took the test myself and while my results did not have as drastic of a spread as some of the participants, my results were much slower as well. Running the T-test against the data validated my results and beliefs regarding the dataset. 
+
+### Formula/Proof of Work:
+
+t = $\displaystyle \frac{\mu_{c} - \mu_{i} }{\frac {S}{\sqrt{n}}}$
+
+Therefore:
+
+t = $\displaystyle \frac{14.05 - 22.02}{\frac {4.864827}{\sqrt{24}}}$ -> t = -8.021
+
+A T value this low does not have a respective P value on the provided charts, so the above T-Test output function is included for brevity.
